@@ -483,6 +483,9 @@ class com_wiris_util_json_JSon extends com_wiris_util_json_StringParser {
 	static function getArray($a) {
 		return $a;
 	}
+	static function getHashArray($a) {
+		return $a;
+	}
 	static function getHash($a) {
 		return $a;
 	}
