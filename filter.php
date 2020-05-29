@@ -35,19 +35,40 @@ require_once('subfilters/php.php');
 require_once('subfilters/mathjax.php');
 
 class filter_wiris extends moodle_text_filter {
-    public function filter($text, array $options = array()) {
+
+    /** @var moodle_text_filter Filter that actually contains the logic. */
+    protected $subfilter;
+
+    /**
+     * Set any context-specific configuration for this filter.
+     *
+     * @param context $context The current context.
+     * @param array $localconfig Any context-specific configuration for this filter.
+     */
+    public function __construct($context, array $localconfig) {
+
+        parent::__construct($context, $localconfig);
 
         switch (get_config('filter_wiris', 'rendertype')) {
             case 'mathjax':
-                $subfilter = new filter_wiris_mathjax($this->context, $this->localconfig);
+                $this->subfilter = new filter_wiris_mathjax($this->context, $this->localconfig);
                 break;
+            case 'js':
+                $this->subfilter = new filter_wiris_js($this->context, $this->localconfig);
             case 'php':
             default:
-                $subfilter = new filter_wiris_php($this->context, $this->localconfig);
+                $this->subfilter = new filter_wiris_php($this->context, $this->localconfig);
                 break;
         }
 
-        return $subfilter->filter($text, $options);
-
     }
+
+    public function filter($text, array $options = array()) {
+        return $this->subfilter->filter($text, $options);
+    }
+
+    public function setup($page, $context) {
+        return $this->subfilter->setup($page, $context);
+    }
+
 }

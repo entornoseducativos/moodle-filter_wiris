@@ -115,7 +115,7 @@ if ($ADMIN->fulltree) {
                                                             get_string('rendertype', 'filter_wiris'),
                                                             get_string('rendertype_help', 'filter_wiris'),
                                                             'default',
-                                                            array('php' => 'php', 'mathjax' => 'mathjax')));
+                                                            array('php' => 'php', 'mathjax' => 'mathjax', 'js' => 'js')));
 
         $settings->add(new admin_setting_configselect('filter_wiris/imageformat',
                                                             get_string('imageformat', 'filter_wiris'),
