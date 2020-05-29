@@ -33,6 +33,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once('subfilters/php.php');
 require_once('subfilters/mathjax.php');
+require_once('subfilters/js.php');
 
 class filter_wiris extends moodle_text_filter {
 
@@ -52,13 +53,16 @@ class filter_wiris extends moodle_text_filter {
         switch (get_config('filter_wiris', 'rendertype')) {
             case 'mathjax':
                 $this->subfilter = new filter_wiris_mathjax($this->context, $this->localconfig);
-                break;
+            break;
+
             case 'js':
                 $this->subfilter = new filter_wiris_js($this->context, $this->localconfig);
+            break;
+            
             case 'php':
             default:
                 $this->subfilter = new filter_wiris_php($this->context, $this->localconfig);
-                break;
+            break;
         }
 
     }
