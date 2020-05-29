@@ -76,7 +76,7 @@ class filter_wiris_js extends moodle_text_filter {
             $i = 0;
             
             $construction_position += strlen("data-wirisconstruction=\"");
-            $construction_end = strpos($text, "\"/>", $construction_position);
+            $construction_end = strpos($text, "\"", $construction_position);
             $construction = substr($text, $construction_position, $construction_end - $construction_position);
             $constructions[$i] = $construction;
 
