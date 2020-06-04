@@ -45,6 +45,17 @@ class filter_wiris_js extends moodle_text_filter {
 
     public function filter($text, array $options = array()) {
 
+        // From original php filter, act only when we detect a math formula
+        // inside the text to filter.
+        $n0 = mb_stripos($text, '«math');
+        $n1 = stripos($text, '<math');
+        $n2 = mb_stripos($text, '«applet');
+        // Otherwise, we do nothing.
+        if ($n0 === false && $n1 === false && $n2 === false) {
+            // Nothing to do.
+            return $text;
+        }
+
         $safexmlentities = [
             'tagOpener' => '&laquo;',
             'tagCloser' => '&raquo;',
@@ -131,6 +142,12 @@ class filter_wiris_js extends moodle_text_filter {
                 $i -= 1; // Parse again the current character.
             }
         }
+
+        if ($currententity !== null) {
+            // It was not an entity, so we add it to the returned text using the dollar
+            $return .= "$$currententity";
+        }
+
 
         // Replace the placeholders by the Wiris Graph constructions
         for ($i = 0; $i < count($constructions); $i++) {
