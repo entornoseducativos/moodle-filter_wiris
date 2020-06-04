@@ -56,12 +56,40 @@ class filter_wiris_js extends moodle_text_filter {
             return $text;
         }
 
-        // MathJax and MathML
-        // Not filter if MathJax filter order < MathType filter order.
+        // MathJax and MathML:
+        // Do nothing if the MathJax filter executes before this MathType filter.
         if ($n1 !== false && $this->mathjax_have_preference()) {
             return $text;
         }
 
+        // Step 1.
+        // Replace Wiris Graph constructions by placeholders
+        $constructions = array();
+        $construction_position = strpos($text, "data-wirisconstruction", 0);
+        while ($construction_position !== false) {
+            $i = 0;
+            
+            $construction_position += strlen("data-wirisconstruction=\"");
+            $construction_end = strpos($text, "\"", $construction_position);
+            $construction = substr($text, $construction_position, $construction_end - $construction_position);
+            $constructions[$i] = $construction;
+
+            $i++;
+            if ($construction_end === false) {
+                // This should not happen.
+                break;
+            }
+
+            $construction_position = strpos($text, "data-wirisconstruction", $construction_end);
+        }
+        for ($i = 0; $i < count($constructions); $i++) {
+            $text = $this->replace_first_occurrence($text, $constructions[$i], "construction-placeholder-" . $i);
+        }
+
+        // Step 2.
+        // Decoding entities.
+        // Step 2.1.
+        // Entity decoding translation table values.
         $safexmlentities = [
             'tagOpener' => '&laquo;',
             'tagCloser' => '&raquo;',
@@ -86,35 +114,14 @@ class filter_wiris_js extends moodle_text_filter {
             'quote' => '\'',
         ];
 
-        // Replace Wiris Graph constructions by placeholders
-        $constructions = array();
-        $construction_position = strpos($text, "data-wirisconstruction", 0);
-        while ($construction_position !== false) {
-            $i = 0;
-            
-            $construction_position += strlen("data-wirisconstruction=\"");
-            $construction_end = strpos($text, "\"", $construction_position);
-            $construction = substr($text, $construction_position, $construction_end - $construction_position);
-            $constructions[$i] = $construction;
-
-            $i++;
-            if ($construction_end === false) {
-                // This should not happen.
-                break;
-            }
-
-            $construction_position = strpos($text, "data-wirisconstruction", $construction_end);
-        }
-        for ($i = 0; $i < count($constructions); $i++) {
-            $text = $this->replace_first_occurrence($text, $constructions[$i], "construction-placeholder-" . $i);
-        }
-
-        // Decoding entities.
+        // Step 2.2.
+        // Perform entity translations
         $text = implode($safexml['tagOpener'], explode($safexmlentities['tagOpener'], $text));
         $text = implode($safexml['tagCloser'], explode($safexmlentities['tagCloser'], $text));
         $text = implode($safexml['doubleQuote'], explode($safexmlentities['doubleQuote'], $text));
         $text = implode($safexml['realDoubleQuote'], explode($safexmlentities['realDoubleQuote'], $text));
 
+        // Step 2.3.
         // Replace safe XML characters with actual XML characters.
         $text = implode($xml['tagOpener'], explode($safexml['tagOpener'], $text));
         $text = implode($xml['tagCloser'], explode($safexml['tagCloser'], $text));
@@ -122,13 +129,12 @@ class filter_wiris_js extends moodle_text_filter {
         $text = implode($xml['ampersand'], explode($safexml['ampersand'], $text));
         $text = implode($xml['quote'], explode($safexml['quote'], $text));
 
-        // We are replacing $ by & when its part of an entity for retrocompatibility.
-        // Now, the standard is replace § by &.
+        // Step 3.
+        // We are replacing '$' by '&' when its part of an entity for retrocompatibility.
         $return = '';
         $currententity = null;
-
+        // Now, the standard is replace '§' by '&'.
         $array = str_split($text);
-
         for ($i = 0; $i < count($array); $i++) {
             $character = $array[$i];
             if ($currententity === null) {
@@ -154,7 +160,7 @@ class filter_wiris_js extends moodle_text_filter {
             $return .= "$$currententity";
         }
 
-
+        // Step 4.
         // Replace the placeholders by the Wiris Graph constructions
         for ($i = 0; $i < count($constructions); $i++) {
             $return = $this->replace_first_occurrence($return, "construction-placeholder-" . $i, $constructions[$i]);
@@ -177,7 +183,7 @@ class filter_wiris_js extends moodle_text_filter {
     }
 
     /**
-     * Gets the WIRISplugin.js file from wiris.net.
+     * Inserts the WIRISplugin.js file from wiris.net.
      *
      * @param moodle_page $page the page we are going to add requirements to.
      * @param context $context the context which contents are going to be filtered.
@@ -200,7 +206,6 @@ class filter_wiris_js extends moodle_text_filter {
      * @return [bool] true if MathJax have preference over MathType filter. False otherwise.
      */
     private function mathjax_have_preference() {
-
         // The complex logic is working out the active state in the parent context,
         // so strip the current context from the list. We need avoid to call
         // filter_get_avaliable_in_context method if the context
