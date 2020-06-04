@@ -134,6 +134,11 @@ class filter_wiris_mathjax extends moodle_text_filter {
             }
         }
 
+        if ($currententity !== null) {
+            // It was not an entity, so we add it to the returned text using the dollar
+            $return .= "$$currententity";
+        }
+
 
         // Replace the placeholders by the Wiris Graph constructions
         for ($i = 0; $i < count($constructions); $i++) {
